@@ -1,10 +1,11 @@
 import { Component } from 'react';
-import fetch from './services/reatApi';
+import fetch from './services/restApi';
 import Loader from 'react-loader-spinner';
 
 import Searchbar from './Components/Searchbar';
-import ImageGallery from './Components/ImageGallery/ImageGallery';
-import Button from './Components/Button/Button';
+import ImageGallery from './Components/ImageGallery';
+import Button from './Components/Button';
+import Modal from './Components/Modal';
 
 class App extends Component {
   state = {
@@ -13,6 +14,8 @@ class App extends Component {
     images: [],
     isLoading: false,
     error: null,
+    currentImage: { largeImageURL: '', description: '' },
+    showModal: false,
   };
 
   componentDidUpdate(prevProps, prevState) {
@@ -27,7 +30,7 @@ class App extends Component {
   }
 
   onChangeQuery = query => {
-    this.setState({ searchQuery: query, currentPage: 1 });
+    this.setState({ searchQuery: query, currentPage: 1, images: [] });
   };
 
   fetchImages = () => {
@@ -47,9 +50,24 @@ class App extends Component {
       .finally(() => this.setState({ isLoading: false }));
   };
 
+  handleImageClick = event => {
+    if (event.target.nodeName === 'IMG') {
+      const largeImageURL = event.target.dataset.largeimage;
+      const description = event.target.alt;
+
+      this.setState({ currentImage: { largeImageURL, description } });
+      this.toggleModal();
+    }
+  };
+
+  toggleModal = () => {
+    this.setState(({ showModal }) => ({ showModal: !showModal }));
+  };
+
   render() {
     const { images, isLoading } = this.state;
     const showBtn = images.length > 0 && !isLoading;
+    const { largeImageURL, description } = this.state.currentImage;
 
     return (
       <>
@@ -66,8 +84,16 @@ class App extends Component {
           )}
         </div>
 
-        <ImageGallery images={this.state.images} />
+        <ImageGallery
+          images={this.state.images}
+          onClick={this.handleImageClick}
+        />
         {showBtn && <Button onclick={this.fetchImages} />}
+        {this.state.showModal && (
+          <Modal onClose={this.toggleModal}>
+            <img className="largeImage" src={largeImageURL} alt={description} />
+          </Modal>
+        )}
       </>
     );
   }
